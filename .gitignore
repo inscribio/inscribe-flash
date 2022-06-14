@@ -2,6 +2,7 @@
 node_modules
 /dist
 
+.envrc
 
 # local env files
 .env.local
