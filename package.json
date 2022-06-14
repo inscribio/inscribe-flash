@@ -1,0 +1,45 @@
+{
+  "name": "inscribe-flash",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "serve": "vue-cli-service serve",
+    "build": "vue-cli-service build",
+    "lint": "vue-cli-service lint",
+    "tauri:build": "vue-cli-service tauri:build",
+    "tauri:serve": "vue-cli-service tauri:serve",
+    "tauri:dev": "vue-cli-service tauri:dev",
+    "dev": "pane=$(tmux split-window -P -F '#{pane_id}' -h vue-cli-service serve); trap \"tmux kill-pane -t $pane\" EXIT; tauri dev --config '{ \"build\": { \"devPath\": \"http://localhost:3000\" }}'"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^1.0.0-rc.6",
+    "core-js": "^3.8.3",
+    "inscribe-theme": "file:inscribe-theme",
+    "vue": "^3.2.13",
+    "vue-toastification": "^2.0.0-rc.5"
+  },
+  "devDependencies": {
+    "@iconify/vue": "^3.2.1",
+    "@typescript-eslint/eslint-plugin": "^5.4.0",
+    "@typescript-eslint/parser": "^5.4.0",
+    "@vue/cli-plugin-babel": "~5.0.0",
+    "@vue/cli-plugin-eslint": "~5.0.0",
+    "@vue/cli-plugin-typescript": "~5.0.0",
+    "@vue/cli-service": "~5.0.0",
+    "@vue/eslint-config-typescript": "^9.1.0",
+    "autoprefixer": "^10.4.7",
+    "cssnano": "^5.1.11",
+    "eslint": "^7.32.0",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "eslint-plugin-vue": "^8.0.3",
+    "postcss": "^8.4.14",
+    "postcss-import": "^14.1.0",
+    "postcss-nested": "^5.0.6",
+    "postcss-simple-vars": "^6.0.3",
+    "prettier": "^2.4.1",
+    "tailwindcss": "^3.1.2",
+    "typescript": "~4.5.5",
+    "vue-cli-plugin-tauri": "~1.0.0-rc.3"
+  }
+}
