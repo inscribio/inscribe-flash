@@ -1,5 +1,6 @@
 import { createApp } from "vue";
 import { Icon } from "@iconify/vue";
+import { createPinia } from "pinia";
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 import App from "./App.vue";
@@ -14,4 +15,5 @@ createApp(App)
     transition: "Vue-Toastification__fade",
     container: document.getElementById("app"),
   })
+  .use(createPinia())
   .mount("#app");

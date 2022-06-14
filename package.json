@@ -15,6 +15,7 @@
     "@tauri-apps/api": "^1.0.0-rc.6",
     "core-js": "^3.8.3",
     "inscribe-theme": "file:inscribe-theme",
+    "pinia": "^2.0.14",
     "vue": "^3.2.13",
     "vue-toastification": "^2.0.0-rc.5"
   },
