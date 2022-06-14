@@ -1,39 +1,60 @@
 <template>
   <div
-    class="mx-auto h-screen max-w-xl flex flex-col justify-center items-center gap-4 antialiased"
+    class="antialiased mx-auto min-h-screen max-w-lg flex flex-col justify-start items-center py-14"
   >
-    <div class="flex items-center">
-      <FileUpload
-        class="btn-group-start"
-        accept="*"
-        method="readAsArrayBuffer"
-        @loaded="onFirmwareUpload"
-        :disabled="ongoing"
+    <div class="w-full px-4">
+      <FileDropArea
+        class="file-drop-area transition-colors duration-300 w-full h-56 rounded-box bg-neutral/50 p-2"
+        @fileDrop="onFileDrop"
       >
-        <div class="flex justify-center items-center gap-2">
-          <Icon icon="ic:baseline-upload" class="text-lg" />
-          <div>Upload firmware</div>
-        </div>
-      </FileUpload>
+        <FileUpload
+          :class="[
+            'w-full h-full rounded-box border-2 border-dashed border-neutral-content',
+            'bg-neutral/70 hover:bg-neutral hover:border-2 hover:border-dashed hover:border-neutral-content',
+            'flex justify-center items-center gap-4',
+          ]"
+          accept="*"
+          method="readAsArrayBuffer"
+          @loaded="onFirmwareUpload"
+          :disabled="ongoing"
+        >
+          <div class="flex flex-col justify-center items-center gap-4">
+            <Icon icon="ic:baseline-upload" class="text-lg" />
+            <span class="normal-case">
+              Select firmware file or drag it here
+            </span>
+          </div>
+        </FileUpload>
+      </FileDropArea>
+    </div>
+
+    <div class="w-full mx-auto px-10 flex justify-between items-center pt-12">
+      <div class="form-control">
+        <label class="label gap-2">
+          <span class=""> Firmware size: </span>
+          {{ fw.size == null ? "-" : (fw.size / 1024).toFixed(1) + " kB" }}
+        </label>
+      </div>
 
       <button
-        class="btn btn-accent btn-group-end"
+        class="btn btn-accent btn-lg gap-2"
         :disabled="!fw.firmwareOk"
         @click="onFlash"
       >
+        <Icon icon="ic:baseline-download" class="text-lg" />
         Flash
       </button>
     </div>
 
     <ProgressBar
-      class="w-full max-w-lg p-2"
+      class="w-full max-w-lg px-2 pt-2"
       :messageLeft="progress.msg"
       :messageRight="progress.note"
       :value="progress.value"
       :maxValue="progress.max"
     />
 
-    <div class="form-control">
+    <div class="form-control pt-16">
       <label class="label">
         <h1 class="label-text">Detected devices</h1>
       </label>
@@ -52,21 +73,18 @@
 
 <script setup lang="ts">
 import { invoke } from "@tauri-apps/api/tauri";
-import { listen } from "@tauri-apps/api/event";
 import { computed, ref, watch } from "vue";
 import { useToast } from "vue-toastification";
 import { useFirmwareStore } from "@/stores/firmware";
 import { useDevicesStore, DfuListEntry } from "@/stores/devices";
 import FileUpload from "@/components/FileUpload.vue";
+import FileDropArea from "@/components/FileDropArea.vue";
 import DeviceList from "@/components/DeviceList.vue";
 import ProgressBar from "@/components/ProgressBar.vue";
 
 const toast = useToast();
 const fw = useFirmwareStore();
 const devices = useDevicesStore();
-
-const STM32_BOOTLOADER_VID_PID = [0x0483, 0xdf11];
-const KEYBOARD_VID_PID = [0x16c0, 0x27db];
 
 const DEFAULT_SCAN_PERIOD = 750;
 
@@ -180,6 +198,7 @@ const onFirmwareUpload = (file: File, d: ArrayBuffer | string) => {
   const data = d as ArrayBuffer;
   fw.setFirmware(new Uint8Array(data));
 };
+const onFileDrop = (data: Uint8Array) => fw.setFirmware(data);
 
 const detach = async (dev: DfuListEntry) => {
   // Note now which devices with the same vid:pid exist now to ignore later.
@@ -253,3 +272,9 @@ const onFlash = async () => {
   done.value = true;
 };
 </script>
+
+<style>
+.file-drop-area.dragover {
+  @apply bg-neutral;
+}
+</style>

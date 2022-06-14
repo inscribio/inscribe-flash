@@ -80,6 +80,7 @@ export const useFirmwareStore = defineStore("Firmware", {
         return;
       }
 
+      this.flashProgress = 0;
       this.flashStage = "init";
       await this.listenProgress();
 

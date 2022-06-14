@@ -15,7 +15,6 @@
 
 <script setup lang="ts">
 import { defineProps, defineEmits, ref } from "vue";
-import { useToast } from "vue-toastification";
 
 const props = defineProps<{
   accept: string;
@@ -30,7 +29,6 @@ const emit = defineEmits<{
   (_e: "loaded", _file: File, _data: ArrayBuffer | string): void;
 }>();
 
-// const toast = useToast();
 const fileInput = ref<HTMLElement | null>(null);
 
 const onUpload = (e: InputEvent) => {
