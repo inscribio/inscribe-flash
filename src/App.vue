@@ -27,6 +27,33 @@
         :max="firmwareSize"
       ></progress>
     </div>
+
+    <button class="btn" @click="findDevices">Find devices</button>
+
+    <div class="overflow-x-auto">
+      <table class="table w-full">
+        <thead>
+          <tr>
+            <th class="w-12"></th>
+            <th class="w-32">Mode</th>
+            <th class="w-24">Devnum</th>
+            <th class="w-32">VID:PID</th>
+          </tr>
+        </thead>
+        <tbody v-if="true">
+          <tr v-for="(dev, i) in deviceList" :key="i">
+            <th>{{ i + 1 }}</th>
+            <td>{{ dev.is_dfu ? "Bootloader" : "Runtime" }}</td>
+            <td>{{ dev.devnum }}</td>
+            <td>
+              {{
+                padZeros(toHex(dev.vid), 4) + ":" + padZeros(toHex(dev.pid), 4)
+              }}
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </template>
 
@@ -44,6 +71,31 @@ const progressBytes = ref(0);
 const firmwareSize = ref(1);
 const progressMessage = ref("");
 
+type DfuListEntry = {
+  is_dfu: boolean;
+  vid: number;
+  pid: number;
+  devnum: number;
+  alt: number;
+};
+
+const isDfuListEntry = (v: unknown): v is DfuListEntry => {
+  if (typeof v != "object" || v == null) return false;
+  const o = v as DfuListEntry;
+  return (
+    typeof o.is_dfu == "boolean" &&
+    typeof o.vid == "number" &&
+    typeof o.pid == "number" &&
+    typeof o.devnum == "number" &&
+    typeof o.alt == "number"
+  );
+};
+
+const isDfuListEntryList = (v: unknown): v is DfuListEntry[] =>
+  Array.isArray(v) && v.every(isDfuListEntry);
+
+const deviceList = ref<DfuListEntry[]>([]);
+
 const progressPercent = computed(() =>
   ((progressBytes.value * 100) / firmwareSize.value).toFixed(0)
 );
@@ -51,6 +103,11 @@ const progressPercent = computed(() =>
 const progressKiloBytes = computed(() =>
   (progressBytes.value / 1024).toFixed(1)
 );
+
+const padZeros = (v: string, n: number) =>
+  "0".repeat(Math.max(0, n - v.length)) + v;
+
+const toHex = (v: number) => v.toString(16);
 
 type Progress = {
   Erase?: number;
@@ -70,6 +127,17 @@ listen("flash-progress", (e) => {
     console.error("Unexpected flash-progress event", e);
   }
 });
+
+const findDevices = () =>
+  invoke("list").then((r) => {
+    if (typeof r == "string") {
+      toast.error("Could not list devices: " + r);
+    } else if (!isDfuListEntryList(r)) {
+      console.error("unexpected data", r);
+    } else {
+      deviceList.value = r;
+    }
+  });
 
 const onFirmwareUpload = (file: File, d: ArrayBuffer | string) => {
   const data = d as ArrayBuffer;
