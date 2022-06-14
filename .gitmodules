@@ -1,0 +1,3 @@
+[submodule "inscribe-theme"]
+	path = inscribe-theme
+	url = git@github.com:inscribio/inscribe-theme.git
