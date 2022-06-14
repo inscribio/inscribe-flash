@@ -10,8 +10,6 @@ use tempfile::NamedTempFile;
 use app::dfu_util;
 
 const DFU_UTIL_BIN: &str = "dfu-util";
-const STM32_BOOTLOADER_VID_PID: (u16, u16) = (0x0483, 0xdf11);
-const KEYBOARD_VID_PID: (u16, u16) = (0x16c0, 0x27db);
 const ALT_SETTING: usize = 0;
 const DOWNLOAD_ADDRESS: usize = 0x0800_0000;
 
@@ -51,8 +49,8 @@ fn flash(window: tauri::Window, firmware: Vec<u8>, dev_num: usize) -> Result<usi
         reset: true,
     };
 
-    let output = dfu_util::download_with_progress(&config, |progress| {
-        window.emit("flash-progress", progress.clone());
+    let _output = dfu_util::download_with_progress(&config, |progress| {
+        window.emit("flash-progress", progress.clone()).ok();
     }).map_err(|e| e.to_string())?;
 
     Ok(n_bytes)

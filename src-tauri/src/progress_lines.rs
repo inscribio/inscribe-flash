@@ -1,5 +1,4 @@
-use std::io;
-use std::io::{BufRead, BufReader};
+use std::io::{self, BufRead};
 
 /// Buffered stream reader that treats both \r and \n as line termination.
 /// This allows to iterate in real time over output of commands with progress bars.
