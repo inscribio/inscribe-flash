@@ -1,12 +1,14 @@
-use std::path::Path;
-use std::{io, process};
+use std::path::PathBuf;
+use std::io;
 
 use regex::{Regex, RegexBuilder};
 use thiserror::Error;
-
-use crate::progress_lines::ProgressLines;
+use tauri::api::process;
 
 type Result<T> = std::result::Result<T, DfuUtilError>;
+
+// Binary embedded in the app
+const DFU_UTIL_SIDECAR: &str = "dfu-util";
 
 #[derive(Error, Debug)]
 pub enum DfuUtilError {
@@ -16,6 +18,10 @@ pub enum DfuUtilError {
     ListParsingFailed(#[from] DfuListParsingError),
     #[error("I/O error")]
     Io(#[from] io::Error),
+    #[error("tauri error")]
+    Tauri(#[from] tauri::Error),
+    #[error("tauri api error")]
+    TauriApi(#[from] tauri::api::Error),
     #[error("invalid utf-8 characters in {0}")]
     InvalidUtf8(String),
 }
@@ -51,97 +57,97 @@ pub enum DfuProgress {
     Download(usize),
 }
 
-pub struct DownloadConfig<'a> {
-    pub bin: &'a Path,
+pub struct DownloadConfig {
     pub dev_num: usize,
     pub alt: usize,
     pub address: usize,
-    pub firmware: &'a Path,
+    pub firmware: PathBuf,
     pub reset: bool,
 }
 
-pub fn list(bin: &str) -> Result<Vec<DfuListEntry>> {
-    let output = process::Command::new(bin).arg("--list").output()?;
-
-    let stdout = String::from_utf8_lossy(&output.stdout);
-    let stderr = String::from_utf8_lossy(&output.stderr);
-
-    // Combine stdout with stderr before parsing. From tests dfu-utils outputs on stderr,
-    // but parse both just to be sure.
-    let out = format!("{}\n{}", stdout, stderr);
+pub fn list() -> Result<Vec<DfuListEntry>> {
+    let output = process::Command::new_sidecar(DFU_UTIL_SIDECAR)?
+        .args(["--list"])
+        .output()?;
 
     if !output.status.success() {
         return Err(DfuUtilError::ProcessFailed {
-            stdout: stdout.to_string(),
-            stderr: stderr.to_string(),
+            stdout: output.stdout.to_string(),
+            stderr: output.stderr.to_string(),
         });
     }
 
-    let lines = out.split("\n").map(|l| l.trim());
+    // Combine stdout with stderr before parsing. From tests dfu-utils outputs on stderr,
+    // but parse both just to be sure.
+    let combined = format!("{}\n{}", output.stdout, output.stderr);
+
+    let lines = combined.split("\n").map(|l| l.trim());
     let entries = lines.filter_map(|l| l.parse::<DfuListEntry>().ok());
 
     Ok(entries.collect())
 }
 
-pub fn detach(bin: &str, dev_num: usize) -> Result<()> {
-    let output = process::Command::new(bin)
+pub fn detach(dev_num: usize) -> Result<()> {
+    let output = process::Command::new_sidecar(DFU_UTIL_SIDECAR)?
         .args(["--devnum", &dev_num.to_string()])
-        .arg("--detach")
+        .args(["--detach"])
         .output()?;
 
     match output.status.success() {
         true => Ok(()),
-        false => {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            let stderr = String::from_utf8_lossy(&output.stderr);
-            return Err(DfuUtilError::ProcessFailed {
-                stdout: stdout.to_string(),
-                stderr: stderr.to_string(),
-            });
-        }
+        false => Err(DfuUtilError::ProcessFailed {
+            stdout: output.stdout.to_string(),
+            stderr: output.stderr.to_string(),
+        }),
     }
 }
 
-pub fn download<'a>(config: &'a DownloadConfig) -> Result<process::Child> {
+fn download<'a>(config: &'a DownloadConfig) -> Result<process::Command> {
     let firmware = config
         .firmware
         .to_str()
         .ok_or_else(|| DfuUtilError::InvalidUtf8(config.firmware.to_string_lossy().to_string()))?;
     let dfuse_address = &format!("0x{:08x}:leave", config.address);
 
-    let mut cmd = process::Command::new(config.bin);
-    cmd.args(["--devnum", &config.dev_num.to_string()])
+    let mut cmd = process::Command::new_sidecar(DFU_UTIL_SIDECAR)?;
+    cmd = cmd.args(["--devnum", &config.dev_num.to_string()])
         .args(["--alt", &config.alt.to_string()])
         .args(["--dfuse-address", dfuse_address])
-        .args(["--download", firmware])
-        .stdout(process::Stdio::piped())
-        .stderr(process::Stdio::piped());
+        .args(["--download", firmware]);
 
     if config.reset {
-        cmd.arg("--reset");
+        cmd = cmd.args(["--reset"]);
     }
 
     // println!("Executing command:\n{:?}", cmd);
-    Ok(cmd.spawn()?)
+    Ok(cmd)
 }
 
-pub fn download_with_progress<'a, F>(
-    config: &'a DownloadConfig,
+pub async fn download_with_progress<F>(
+    config: DownloadConfig,
     mut on_progress: F,
-) -> Result<process::Output>
+) -> Result<String>
 where
     F: FnMut(&DfuProgress),
 {
-    let mut proc = download(config)?;
-    let out = io::BufReader::new(proc.stdout.as_mut().unwrap());
+    let cmd = download(&config)?;
 
-    for line in ProgressLines::new(out) {
-        if let Ok(progress) = line?.parse::<DfuProgress>() {
-            on_progress(&progress)
+    let (mut rx, _child) = cmd.spawn()?;
+    let mut stderr = String::new();
+
+    while let Some(event) = rx.recv().await {
+        match event {
+            process::CommandEvent::Stdout(line) => {
+                if let Ok(progress) = line.parse::<DfuProgress>() {
+                    on_progress(&progress)
+                }
+            }
+            process::CommandEvent::Stderr(line) => stderr += &line,
+            _ => (),
         }
     }
 
-    Ok(proc.wait_with_output()?)
+    Ok(stderr)
 }
 
 impl std::str::FromStr for DfuListEntry {

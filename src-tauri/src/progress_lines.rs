@@ -10,6 +10,7 @@ pub struct ProgressLines<B> {
 }
 
 impl<B: BufRead> ProgressLines<B> {
+    #[allow(dead_code)]
     pub fn new(reader: B) -> Self {
         Self { reader }
     }
