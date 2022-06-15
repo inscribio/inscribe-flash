@@ -70,6 +70,7 @@ const DEFAULT_SCAN_PERIOD = 750;
 const DETACH_SCAN_PERIOD = 250;
 const DETACH_MAX_WAIT = 6000;
 const DETACH_STEPS = Math.ceil(DETACH_MAX_WAIT / DETACH_SCAN_PERIOD);
+const DETACH_SUB_STEPS = 5;
 const DETACH_HITS_REQUIRED = 3;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -88,7 +89,7 @@ const defaultProgress = {
 };
 
 const scanPeriod = ref(DEFAULT_SCAN_PERIOD);
-const detachStep = ref(null as number | null);
+const detachSubStep = ref(null as number | null);
 const progress = ref<ProgressInfo>(defaultProgress);
 const done = ref(false);
 const filename = ref("");
@@ -99,16 +100,16 @@ watch(
 );
 
 const ongoing = computed(
-  () => fw.flashStage != "ready" || detachStep.value != null
+  () => fw.flashStage != "ready" || detachSubStep.value != null
 );
 
 const getProgress = () => {
-  if (detachStep.value != null) {
+  if (detachSubStep.value != null) {
     return {
       msg: "Detaching...",
       note: "",
-      value: detachStep.value,
-      max: DETACH_STEPS,
+      value: detachSubStep.value,
+      max: DETACH_STEPS * DETACH_SUB_STEPS,
     };
   }
 
@@ -138,7 +139,7 @@ const getProgress = () => {
 };
 
 watch(
-  () => [detachStep.value, fw.flashStage, fw.flashProgress],
+  () => [detachSubStep.value, fw.flashStage, fw.flashProgress],
   () => (progress.value = getProgress())
 );
 
@@ -210,7 +211,7 @@ const detach = async (dev: DfuListEntry) => {
 
   // Wait for the device to appear
   scanPeriod.value = DETACH_SCAN_PERIOD;
-  detachStep.value = 0;
+  detachSubStep.value = 0;
 
   let lastFound = null as DfuListEntry | null;
   let hits = 0;
@@ -225,13 +226,15 @@ const detach = async (dev: DfuListEntry) => {
     if (hits >= DETACH_HITS_REQUIRED) break;
 
     lastFound = found;
-    detachStep.value = i + 1;
 
-    if (i + 1 < DETACH_STEPS) await sleep(scanPeriod.value);
+    for (let j = 0; j < DETACH_SUB_STEPS; j++) {
+      detachSubStep.value += 1;
+      await sleep(Math.floor(scanPeriod.value / DETACH_SUB_STEPS));
+    }
   }
 
   scanPeriod.value = DEFAULT_SCAN_PERIOD;
-  detachStep.value = null;
+  detachSubStep.value = null;
 
   if (hits >= DETACH_HITS_REQUIRED && lastFound != null) {
     return lastFound;
