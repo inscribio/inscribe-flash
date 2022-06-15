@@ -18,7 +18,7 @@ import { readBinaryFile } from "@tauri-apps/api/fs";
 import { defineEmits, onMounted, onBeforeUnmount, ref } from "vue";
 
 const emit = defineEmits<{
-  (_e: "fileDrop", _v: Uint8Array): void;
+  (_e: "fileDrop", _v: Uint8Array, _fname: string): void;
 }>();
 
 const dragover = ref(false);
@@ -40,9 +40,10 @@ const drop = () => (dragover.value = false);
 const tauriFileDrop = async (e) => {
   const file = e.payload[0];
   if (file == null) throw Error("Dropped file is null");
+  if (!dragover.value) return; // dropped outside
 
   const data = await readBinaryFile(file);
-  emit("fileDrop", data);
+  emit("fileDrop", data, file);
 };
 
 onMounted(async () => {

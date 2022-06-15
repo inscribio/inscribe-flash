@@ -18,6 +18,7 @@ export const useFirmwareStore = defineStore("Firmware", {
   state: () => {
     return {
       firmware: null as Uint8Array | null,
+      filename: null as string | null,
       flashProgress: 0,
       flashStage: "ready" as FlashStage,
       unlisten: undefined as UnlistenFn | undefined,
@@ -42,14 +43,26 @@ export const useFirmwareStore = defineStore("Firmware", {
   },
 
   actions: {
-    setFirmware(bytes: Uint8Array) {
-      // TODO: this is here not to mess up progress, but this restriction is undeeded
+    resetFirmware() {
+      // TODO: same as in setFirmware
+      if (this.flashStage != "ready") {
+        const toast = useToast();
+        toast.error("Cannot change firmware: flashing operation is ongoing");
+        return;
+      }
+      this.firmware = null;
+      this.filename = null;
+    },
+
+    setFirmware(bytes: Uint8Array, filename: string) {
+      // TODO: this is here not to mess up progress, but overall this restriction is undeeded
       if (this.flashStage != "ready") {
         const toast = useToast();
         toast.error("Cannot change firmware: flashing operation is ongoing");
         return;
       }
       this.firmware = bytes;
+      this.filename = filename;
     },
 
     async listenProgress() {

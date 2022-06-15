@@ -1,60 +1,31 @@
 <template>
   <div
-    class="antialiased mx-auto min-h-screen max-w-lg flex flex-col justify-start items-center py-14"
+    class="antialiased mx-auto min-h-screen max-w-lg flex flex-col justify-between items-center pt-12 pb-14 gap-4"
   >
-    <div class="w-full px-4">
-      <FileDropArea
-        class="file-drop-area transition-colors duration-300 w-full h-56 rounded-box bg-neutral/50 p-2"
-        @fileDrop="onFileDrop"
-      >
-        <FileUpload
-          :class="[
-            'w-full h-full rounded-box border-2 border-dashed border-neutral-content',
-            'bg-neutral/70 hover:bg-neutral hover:border-2 hover:border-dashed hover:border-neutral-content',
-            'flex justify-center items-center gap-4',
-          ]"
-          accept="*"
-          method="readAsArrayBuffer"
-          @loaded="onFirmwareUpload"
-          :disabled="ongoing"
-        >
-          <div class="flex flex-col justify-center items-center gap-4">
-            <Icon icon="ic:baseline-upload" class="text-lg" />
-            <span class="normal-case">
-              Select firmware file or drag it here
-            </span>
-          </div>
-        </FileUpload>
-      </FileDropArea>
+    <div class="w-full max-w-md form-control">
+      <FirmwareSelect class="w-full h-36" :disabled="ongoing" />
+
+      <label class="label px-4">
+        <span class="label-text">
+          <span class=""> File: </span>
+          {{ filename != "" ? filename : "-" }}
+        </span>
+        <span class="label-text-alt">
+          {{ fw.size == null ? "" : (fw.size / 1024).toFixed(1) + " kB" }}
+        </span>
+      </label>
     </div>
 
-    <div class="w-full mx-auto px-10 flex justify-between items-center pt-12">
-      <div class="form-control">
-        <label class="label gap-2">
-          <span class=""> Firmware size: </span>
-          {{ fw.size == null ? "-" : (fw.size / 1024).toFixed(1) + " kB" }}
-        </label>
-      </div>
+    <button
+      class="btn btn-accent btn-wide gap-2"
+      :disabled="!fw.firmwareOk"
+      @click="onFlash"
+    >
+      <Icon icon="ic:round-flash-on" class="text-lg" />
+      Flash
+    </button>
 
-      <button
-        class="btn btn-accent btn-lg gap-2"
-        :disabled="!fw.firmwareOk"
-        @click="onFlash"
-      >
-        <Icon icon="ic:baseline-download" class="text-lg" />
-        Flash
-      </button>
-    </div>
-
-    <ProgressBar
-      class="w-full max-w-lg px-2 pt-2"
-      :messageLeft="progress.msg"
-      :messageRight="progress.note"
-      :value="progress.value"
-      :maxValue="progress.max"
-    />
-
-    <div class="form-control pt-16">
+    <div class="form-control">
       <label class="label">
         <h1 class="label-text">Detected devices</h1>
       </label>
@@ -69,16 +40,24 @@
       </label>
     </div>
   </div>
+
+  <ProgressBar
+    class="w-full fixed bottom-0 translate-y-1/1 pb-4 px-10"
+    :messageLeft="progress.msg"
+    :messageRight="progress.note"
+    :value="progress.value"
+    :maxValue="progress.max"
+  />
 </template>
 
 <script setup lang="ts">
 import { invoke } from "@tauri-apps/api/tauri";
+import { basename } from "@tauri-apps/api/path";
 import { computed, ref, watch } from "vue";
 import { useToast } from "vue-toastification";
 import { useFirmwareStore } from "@/stores/firmware";
 import { useDevicesStore, DfuListEntry } from "@/stores/devices";
-import FileUpload from "@/components/FileUpload.vue";
-import FileDropArea from "@/components/FileDropArea.vue";
+import FirmwareSelect from "@/components/FirmwareSelect.vue";
 import DeviceList from "@/components/DeviceList.vue";
 import ProgressBar from "@/components/ProgressBar.vue";
 
@@ -112,6 +91,12 @@ const scanPeriod = ref(DEFAULT_SCAN_PERIOD);
 const detachStep = ref(null as number | null);
 const progress = ref<ProgressInfo>(defaultProgress);
 const done = ref(false);
+const filename = ref("");
+
+watch(
+  () => fw.filename,
+  async (name) => (filename.value = await basename(name ?? ""))
+);
 
 const ongoing = computed(
   () => fw.flashStage != "ready" || detachStep.value != null
