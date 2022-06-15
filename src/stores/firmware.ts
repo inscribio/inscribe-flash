@@ -69,8 +69,7 @@ export const useFirmwareStore = defineStore("Firmware", {
       this.unlisten = await listen("flash-progress", (e) => {
         const progress = e.payload;
         if (!isProgress(progress)) {
-          console.error("Unexpected flash-progress event", e);
-          return;
+          throw Error("Unexpected flash-progress event: " + e);
         }
 
         if (progress.Erase) {
@@ -98,10 +97,9 @@ export const useFirmwareStore = defineStore("Firmware", {
       await this.listenProgress();
 
       const finish = (error?: string) => {
-        if (error != undefined) console.error(error);
-        if (this.unlisten == undefined) console.error("unlisten is undefined");
-        else this.unlisten();
+        if (this.unlisten != undefined) this.unlisten();
         this.flashStage = "ready";
+        if (error != undefined) throw Error(error);
       };
 
       if (this.firmware == null) {

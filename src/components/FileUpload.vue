@@ -32,7 +32,6 @@ const emit = defineEmits<{
 const fileInput = ref<HTMLElement | null>(null);
 
 const onUpload = (e: InputEvent) => {
-  console.log("ON UPLOAD", e);
   if (e?.target == null) return;
   if (e.target.files.length < 1) throw Error("No file has been uploaded");
 

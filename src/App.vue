@@ -180,12 +180,6 @@ const selected = computed(() => {
   }
 });
 
-const onFirmwareUpload = (file: File, d: ArrayBuffer | string) => {
-  const data = d as ArrayBuffer;
-  fw.setFirmware(new Uint8Array(data));
-};
-const onFileDrop = (data: Uint8Array) => fw.setFirmware(data);
-
 const detach = async (dev: DfuListEntry) => {
   // Note now which devices with the same vid:pid exist now to ignore later.
   const ignore = devices.unique
