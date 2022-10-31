@@ -20,13 +20,13 @@ else
 fi
 
 # Source paths
-name='inscribe-flash'
+app_name='inscribe-flash'
 
-win_msi="${bundle_dir}/msi/${name}_${version}_x64_en-US.msi"
-mac_app="${bundle_dir}/macos/${name}.app"
-mac_dmg="${bundle_dir}/dmg/${name}_${version}_x64.dmg"
-linux_appimg="${bundle_dir}/appimage/${name}_${version}_amd64.AppImage"
-linux_deb="${bundle_dir}/deb/${name}_${version}_amd64.deb"
+win_msi="${bundle_dir}/msi/${app_name}_${version}_x64_en-US.msi"
+mac_app="${bundle_dir}/macos/${app_name}.app"
+mac_dmg="${bundle_dir}/dmg/${app_name}_${version}_x64.dmg"
+linux_appimg="${bundle_dir}/appimage/${app_name}_${version}_amd64.AppImage"
+linux_deb="${bundle_dir}/deb/${app_name}_${version}_amd64.deb"
 
 # Generate output
 mkdir -p "$out_dir"
@@ -37,7 +37,7 @@ generate() {
     flag="$3"
     if [[ -e "$src" ]]; then
         echo "Preparing $name ..." 1>&2
-        out="${out_dir}/${name}_${version}_${name}"
+        out="${out_dir}/${app_name}_${version}_${name}"
         if [[ $flag = '--zip' ]]; then
             out="${out}.zip"
 
