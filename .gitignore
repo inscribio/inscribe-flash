@@ -1,7 +1,13 @@
+# outputs
 .DS_Store
 node_modules
 /dist
+/release
 
+# helper symlink
+/bundle
+
+# direnv
 .envrc
 
 # local env files
@@ -22,6 +28,3 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
-
-# some helper symlinks
-/bundle
