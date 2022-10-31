@@ -1,24 +1,19 @@
 # inscribe-flash
 
-## Project setup
-```
-npm install
+Application for uploading keyboard firmware over USB.
+
+## Development
+
+Tauri application consists of Vue (vue-cli) frontend and Rust backend.
+
+To start development server:
+
+```sh
+npm run tauri:serve
 ```
 
-### Compiles and hot-reloads for development
-```
-npm run serve
-```
+To build executable for release:
 
-### Compiles and minifies for production
+```sh
+npm run tauri:build
 ```
-npm run build
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
