@@ -189,9 +189,14 @@ const detach = async (dev: DfuListEntry) => {
     devices.unique.filter((d) => !ignore.includes(d.devnum));
 
   const result = await invoke("detach", { devNum: dev.devnum });
+  const bootloadSecureMsg =
+    "Did you press AllowBootloader key? (required in secure bootload mode)";
 
   if (typeof result == "string") {
-    toast.error("Could not detach device: " + result);
+    toast.error(
+      "Could not detach device: " + result + ". " + bootloadSecureMsg
+    );
+
     return null;
   }
 
@@ -233,7 +238,7 @@ const detach = async (dev: DfuListEntry) => {
   if (hits >= DETACH_HITS_REQUIRED && lastFound != null) {
     return lastFound;
   } else {
-    toast.error("Could not find device after detaching");
+    toast.error("Could not find device after detaching. " + bootloadSecureMsg);
     return null;
   }
 };
