@@ -7,6 +7,8 @@ node_modules
 # helper symlink
 /bundle
 
+/docker-bundle
+
 # direnv
 .envrc
 

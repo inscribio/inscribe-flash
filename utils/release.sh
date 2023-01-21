@@ -11,6 +11,7 @@ cd "$root_dir" || exit 1
 
 out_dir="${1:-$root_dir/release}"
 bundle_dir="$root_dir/src-tauri/target/release/bundle"
+docker_bundle_dir="$root_dir/docker-bundle"
 
 # Retrieve package version
 if command -v jq &> /dev/null; then
@@ -25,8 +26,8 @@ app_name='inscribe-flash'
 win_msi="${bundle_dir}/msi/${app_name}_${version}_x64_en-US.msi"
 mac_app="${bundle_dir}/macos/${app_name}.app"
 mac_dmg="${bundle_dir}/dmg/${app_name}_${version}_x64.dmg"
-linux_appimg="${bundle_dir}/appimage/${app_name}_${version}_amd64.AppImage"
-linux_deb="${bundle_dir}/deb/${app_name}_${version}_amd64.deb"
+linux_appimg="${docker_bundle_dir}/appimage/${app_name}_${version}_amd64.AppImage"
+linux_deb="${docker_bundle_dir}/deb/${app_name}_${version}_amd64.deb"
 
 # Generate output
 mkdir -p "$out_dir"

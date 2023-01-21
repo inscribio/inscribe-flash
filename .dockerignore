@@ -1,0 +1,9 @@
+**/.git
+**/bundle/
+**/dist/
+**/node_modules/
+**/release/
+**/target/
+
+/.git*
+/.dockerignore
