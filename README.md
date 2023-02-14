@@ -57,6 +57,12 @@ plug it again. It will now be using the new firmware.
 ## Development
 
 Tauri application consists of Vue (vue-cli) frontend and Rust backend.
+Tauri dependencies (see their website) and Node.js need to be installed.
+
+First install project dependencies:
+```sh
+npm install .
+```
 
 To start development server:
 
