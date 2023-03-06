@@ -188,58 +188,61 @@ const detach = async (dev: DfuListEntry) => {
   const considered = () =>
     devices.unique.filter((d) => !ignore.includes(d.devnum));
 
-  const result = await invoke("detach", { devNum: dev.devnum });
   const bootloadSecureMsg =
     "Did you press AllowBootloader key? (required in secure bootload mode)";
 
-  if (typeof result == "string") {
-    toast.error(
-      "Could not detach device: " + result + ". " + bootloadSecureMsg
-    );
+  try {
+    // Wait for the device to appear
+    scanPeriod.value = DETACH_SCAN_PERIOD;
+    detachSubStep.value = 0;
 
-    return null;
-  }
-
-  // Find a non-ignored bootloader
-  const find = () => {
-    const bootloaders = considered().filter(devices.isBootloader);
-    // Sort by newest
-    bootloaders.sort((a, b) => b.devnum - a.devnum);
-    return bootloaders[0];
-  };
-
-  // Wait for the device to appear
-  scanPeriod.value = DETACH_SCAN_PERIOD;
-  detachSubStep.value = 0;
-
-  let lastFound = null as DfuListEntry | null;
-  let hits = 0;
-
-  for (let i = 0; i < DETACH_STEPS; i++) {
-    const found = find();
-
-    if (found == undefined) hits = 0;
-    else if (found.devnum == lastFound?.devnum) hits += 1;
-    else hits = 0;
-
-    if (hits >= DETACH_HITS_REQUIRED) break;
-
-    lastFound = found;
-
-    for (let j = 0; j < DETACH_SUB_STEPS; j++) {
-      detachSubStep.value += 1;
-      await sleep(Math.floor(scanPeriod.value / DETACH_SUB_STEPS));
+    try {
+      await invoke("detach", { devNum: dev.devnum });
+    } catch (error) {
+      console.log(error);
+      toast.error("Could not detach device. " + bootloadSecureMsg);
+      return null;
     }
-  }
 
-  scanPeriod.value = DEFAULT_SCAN_PERIOD;
-  detachSubStep.value = null;
+    // Find a non-ignored bootloader
+    const find = () => {
+      const bootloaders = considered().filter(devices.isBootloader);
+      // Sort by newest
+      bootloaders.sort((a, b) => b.devnum - a.devnum);
+      return bootloaders[0];
+    };
 
-  if (hits >= DETACH_HITS_REQUIRED && lastFound != null) {
-    return lastFound;
-  } else {
-    toast.error("Could not find device after detaching. " + bootloadSecureMsg);
-    return null;
+    let lastFound = null as DfuListEntry | null;
+    let hits = 0;
+
+    for (let i = 0; i < DETACH_STEPS; i++) {
+      const found = find();
+
+      if (found == undefined) hits = 0;
+      else if (found.devnum == lastFound?.devnum) hits += 1;
+      else hits = 0;
+
+      if (hits >= DETACH_HITS_REQUIRED) break;
+
+      lastFound = found;
+
+      for (let j = 0; j < DETACH_SUB_STEPS; j++) {
+        detachSubStep.value += 1;
+        await sleep(Math.floor(scanPeriod.value / DETACH_SUB_STEPS));
+      }
+    }
+
+    if (hits >= DETACH_HITS_REQUIRED && lastFound != null) {
+      return lastFound;
+    } else {
+      toast.error(
+        "Could not find device after detaching. " + bootloadSecureMsg
+      );
+      return null;
+    }
+  } finally {
+    scanPeriod.value = DEFAULT_SCAN_PERIOD;
+    detachSubStep.value = null;
   }
 };
 
