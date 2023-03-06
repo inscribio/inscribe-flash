@@ -93,12 +93,16 @@ pub fn detach(dev_num: usize) -> Result<()> {
         .args(["--detach"])
         .output()?;
 
+    let stdout = output.stdout.to_string();
+    let stderr = output.stderr.to_string();
+
     match output.status.success() {
-        true => Ok(()),
-        false => Err(DfuUtilError::ProcessFailed {
-            stdout: output.stdout.to_string(),
-            stderr: output.stderr.to_string(),
-        }),
+        true => if stderr.contains("dfu-util: error detaching") {
+            Err(DfuUtilError::ProcessFailed { stdout, stderr })
+        } else {
+            Ok(())
+        },
+        false => Err(DfuUtilError::ProcessFailed { stdout, stderr }),
     }
 }
 
