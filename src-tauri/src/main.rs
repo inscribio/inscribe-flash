@@ -43,7 +43,7 @@ async fn flash(window: tauri::Window, firmware: Vec<u8>, dev_num: usize) -> Resu
         alt: ALT_SETTING,
         address: DOWNLOAD_ADDRESS,
         firmware: file.path().to_path_buf(),
-        reset: true,
+        reset: false,
     };
 
     let _stderr = dfu_util::download_with_progress(config, |progress| {
