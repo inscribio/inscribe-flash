@@ -46,6 +46,15 @@ Then you can use inscribe-flash normally.
 Install from the provided `.deb` package or use the provided AppImage. No additional
 dependencies are needed.
 
+To allow access without root permissions (without "sudo") add make sure to save the following
+udev rule file at `/etc/udev/rules.d/40-generic-keyboard.rules`:
+```
+# Allow access to 16c0:27db (generic keyboard) for users in group plugdev
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="27db", GROUP="plugdev", MODE="0666"
+```
+and ensure that user is in group `plugdev`. To check it use the command `groups`, if you don't
+see `plugdev` then add your user with `sudo usermod -a -G plugdev <your-username>`.
+
 ## Usage
 
 Start inscribe-flash then select the firmware file that you want to flash (or drag it
