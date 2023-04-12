@@ -12,6 +12,7 @@
 </template>
 
 <script setup lang="ts">
+import { invoke } from "@tauri-apps/api/tauri";
 import { listen } from "@tauri-apps/api/event";
 import type { UnlistenFn } from "@tauri-apps/api/event";
 import { readBinaryFile } from "@tauri-apps/api/fs";
@@ -37,10 +38,14 @@ const dragEnd = () => (dragover.value = false);
 // Will not fire in tauri, so we use tauri://file-drop
 const drop = () => (dragover.value = false);
 
+const isWindows = async () => await invoke("has_winusb");
+
 const tauriFileDrop = async (e) => {
   const file = e.payload[0];
   if (file == null) throw Error("Dropped file is null");
-  if (!dragover.value) return; // dropped outside
+
+  // dropped outside (on windows drag events won't work so always accept)
+  if (!(await isWindows()) && !dragover.value) return;
 
   const data = await readBinaryFile(file);
   emit("fileDrop", data, file);
