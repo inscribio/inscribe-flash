@@ -4,10 +4,13 @@ node_modules
 /dist
 /release
 
-# helper symlink
-/bundle
+# misc
+/tmp
 
+# helper symlinks
+/bundle
 /docker-bundle
+/inscribe-flash
 
 # direnv
 .envrc
