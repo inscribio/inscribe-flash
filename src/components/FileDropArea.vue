@@ -44,8 +44,11 @@ const tauriFileDrop = async (e) => {
   const file = e.payload[0];
   if (file == null) throw Error("Dropped file is null");
 
-  // dropped outside (on windows drag events won't work so always accept)
-  if (!(await isWindows()) && !dragover.value) return;
+  // Dropped outside
+  // * on windows drag events won't work
+  // * on other platforms the events are messed up and dragover is always false
+  // So just always accept for now
+  // if (!(await isWindows()) && !dragover.value) return;
 
   const data = await readBinaryFile(file);
   emit("fileDrop", data, file);
