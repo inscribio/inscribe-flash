@@ -25,6 +25,15 @@
       Flash
     </button>
 
+    <button
+      v-if="driver_install_needed"
+      class="btn btn-secondary gap-2"
+      @click="onInstallDrivers"
+    >
+      <Icon icon="ic:baseline-install-desktop" class="text-lg" />
+      Install drivers
+    </button>
+
     <div class="form-control">
       <label class="label">
         <h1 class="label-text">Detected devices</h1>
@@ -39,27 +48,34 @@
         <h1 class="label-text italic">{{ selected?.tooltip ?? "" }}</h1>
       </label>
     </div>
-  </div>
 
-  <ProgressBar
-    class="w-full fixed bottom-0 translate-y-1/1 pb-4 px-10"
-    :messageLeft="progress.msg"
-    :messageRight="progress.note"
-    :value="progress.value"
-    :maxValue="progress.max"
-  />
+    <DriversInstall ref="installer" />
+
+    <ProgressBar
+      class="w-full fixed bottom-0 translate-y-1/1 pb-4 px-10"
+      :messageLeft="progress.msg"
+      :messageRight="progress.note"
+      :value="progress.value"
+      :maxValue="progress.max"
+    />
+
+    <ModalsContainer />
+  </div>
 </template>
 
 <script setup lang="ts">
 import { invoke } from "@tauri-apps/api/tauri";
 import { basename } from "@tauri-apps/api/path";
 import { computed, ref, watch } from "vue";
+import { ModalsContainer } from "vue-final-modal";
 import { useToast } from "vue-toastification";
+import { sleep } from "@/utils";
 import { useFirmwareStore } from "@/stores/firmware";
-import { useDevicesStore, DfuListEntry } from "@/stores/devices";
+import { useDevicesStore, DfuListEntry, LibwdiDevice } from "@/stores/devices";
 import FirmwareSelect from "@/components/FirmwareSelect.vue";
 import DeviceList from "@/components/DeviceList.vue";
 import ProgressBar from "@/components/ProgressBar.vue";
+import DriversInstall from "@/components/DriversInstall.vue";
 
 const toast = useToast();
 const fw = useFirmwareStore();
@@ -72,8 +88,6 @@ const DETACH_MAX_WAIT = 6000;
 const DETACH_STEPS = Math.ceil(DETACH_MAX_WAIT / DETACH_SCAN_PERIOD);
 const DETACH_SUB_STEPS = 5;
 const DETACH_HITS_REQUIRED = 3;
-
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 type ProgressInfo = {
   msg: string;
@@ -93,15 +107,24 @@ const detachSubStep = ref(null as number | null);
 const progress = ref<ProgressInfo>(defaultProgress);
 const done = ref(false);
 const filename = ref("");
+const installer = ref<InstanceType<typeof DriversInstall> | null>(null);
 
 watch(
   () => fw.filename,
-  async (name) => (filename.value = await basename(name ?? ""))
+  async (name) => {
+    try {
+      filename.value = await basename(name ?? "");
+    } catch {
+      filename.value = "";
+    }
+  }
 );
 
 const ongoing = computed(
   () => fw.flashStage != "ready" || detachSubStep.value != null
 );
+
+const driver_install_needed = computed(() => devices.noDriver.length > 0);
 
 const getProgress = () => {
   if (detachSubStep.value != null) {
@@ -188,6 +211,13 @@ const detach = async (dev: DfuListEntry) => {
   const considered = () =>
     devices.unique.filter((d) => !ignore.includes(d.devnum));
 
+  // Analogically for devices without drivers but use different key
+  const noDriverDevKey = (dev: LibwdiDevice) =>
+    `${dev.vid}:${dev.pid}:${dev.desc}:${dev.device_id ?? "-"}`;
+  const ignoreNoDriver = devices.noDriver.map(noDriverDevKey);
+  const consideredNoDriver = () =>
+    devices.noDriver.filter((d) => !ignoreNoDriver.includes(noDriverDevKey(d)));
+
   const bootloadSecureMsg =
     "Did you press AllowBootloader key? (required in secure bootload mode)";
 
@@ -211,9 +241,16 @@ const detach = async (dev: DfuListEntry) => {
       bootloaders.sort((a, b) => b.devnum - a.devnum);
       return bootloaders[0];
     };
+    const findNoDriver = () => consideredNoDriver()[0];
+    const tryNoDriverKey = (dev: LibwdiDevice | null) =>
+      dev != null ? noDriverDevKey(dev) : null;
+    const noDriverDevCmp = (found: LibwdiDevice, last: LibwdiDevice | null) =>
+      noDriverDevKey(found) == tryNoDriverKey(last);
 
     let lastFound = null as DfuListEntry | null;
     let hits = 0;
+    let lastFoundNoDriver = null as LibwdiDevice | null;
+    let hitsNoDriver = 0;
 
     for (let i = 0; i < DETACH_STEPS; i++) {
       const found = find();
@@ -222,9 +259,26 @@ const detach = async (dev: DfuListEntry) => {
       else if (found.devnum == lastFound?.devnum) hits += 1;
       else hits = 0;
 
+      const foundNoDriver = findNoDriver();
+      if (foundNoDriver == undefined) hitsNoDriver = 0;
+      else if (noDriverDevCmp(foundNoDriver, lastFoundNoDriver))
+        hitsNoDriver += 1;
+      else hitsNoDriver = 0;
+
+      // If there is a device without drivers then install them
+      if (hitsNoDriver >= DETACH_HITS_REQUIRED) {
+        await installer.value?.install();
+        hitsNoDriver = 0;
+        // restart detach loop
+        i = 0;
+        // add this device to ignored ones
+        ignoreNoDriver.push(noDriverDevKey(foundNoDriver));
+      }
+
       if (hits >= DETACH_HITS_REQUIRED) break;
 
       lastFound = found;
+      lastFoundNoDriver = foundNoDriver;
 
       for (let j = 0; j < DETACH_SUB_STEPS; j++) {
         detachSubStep.value += 1;
@@ -247,6 +301,13 @@ const detach = async (dev: DfuListEntry) => {
 };
 
 const onFlash = async () => {
+  if (driver_install_needed.value && selected.value.dev == null) {
+    await installer.value?.install();
+    toast.warning(
+      "Some devices are missing USB drivers. Click INSTALL DRIVERS if you encounter problems."
+    );
+  }
+
   let dev = selected.value.dev;
   if (dev == null) return;
 
@@ -260,6 +321,14 @@ const onFlash = async () => {
 
   fw.flash(dev.devnum);
   done.value = true;
+};
+
+const onInstallDrivers = async () => {
+  try {
+    await installer.value?.install();
+  } catch (_error) {
+    toast.error("Installation failed");
+  }
 };
 </script>
 

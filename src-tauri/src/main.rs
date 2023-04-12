@@ -53,9 +53,50 @@ async fn flash(window: tauri::Window, firmware: Vec<u8>, dev_num: usize) -> Resu
     Ok(n_bytes)
 }
 
-fn main() {
+#[tauri::command]
+fn has_winusb() -> bool {
+    cfg!(windows)
+}
+
+#[cfg(windows)]
+fn tauri_main() {
+    use app::winusb;
+    winusb::run(|installer| {
+        tauri::Builder::default()
+            .manage(installer)
+            .invoke_handler(tauri::generate_handler![
+                list,
+                detach,
+                flash,
+                has_winusb,
+                winusb::winusb_install,
+                winusb::winusb_candidates,
+            ])
+            .run(tauri::generate_context!())
+            .expect("error while running tauri application");
+    });
+}
+
+#[cfg(not(windows))]
+fn tauri_main() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![list, detach, flash])
+        .invoke_handler(tauri::generate_handler![
+            list,
+            detach,
+            flash,
+            has_winusb,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+fn main() {
+    env_logger::builder()
+        .filter_level(log::LevelFilter::Debug)
+        .format_timestamp(None)
+        .init();
+    log::info!("Starting");
+    log::trace!("Starting trace");
+
+    tauri_main();
 }

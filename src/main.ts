@@ -1,6 +1,8 @@
 import { createApp } from "vue";
 import { Icon } from "@iconify/vue";
 import { createPinia } from "pinia";
+import { createVfm } from "vue-final-modal";
+import "vue-final-modal/style.css";
 import Toast from "vue-toastification";
 import "vue-toastification/dist/index.css";
 import App from "./App.vue";
@@ -16,4 +18,5 @@ createApp(App)
     container: document.getElementById("app"),
   })
   .use(createPinia())
+  .use(createVfm())
   .mount("#app");

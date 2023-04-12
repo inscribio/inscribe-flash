@@ -10,7 +10,7 @@
           <th class="w-32">Name</th>
         </tr>
       </thead>
-      <tbody v-if="true">
+      <tbody>
         <tr
           v-for="(dev, i) in devices.unique"
           :key="i"
@@ -19,11 +19,7 @@
           <th>{{ i + 1 }}</th>
           <td>{{ dev.is_dfu ? "Bootloader" : "Runtime" }}</td>
           <td>{{ dev.devnum }}</td>
-          <td>
-            {{
-              padZeros(toHex(dev.vid), 4) + ":" + padZeros(toHex(dev.pid), 4)
-            }}
-          </td>
+          <td>{{ vidPidString(dev.vid, dev.pid) }}</td>
           <td>
             {{
               devices.isKeyboard(dev)
@@ -34,6 +30,14 @@
             }}
           </td>
         </tr>
+
+        <tr v-for="(dev, i) in devices.noDriver" :key="i">
+          <th>{{ devices.unique.length + i + 1 }}</th>
+          <td>No driver</td>
+          <td>-</td>
+          <td>{{ vidPidString(dev.vid, dev.pid) }}</td>
+          <td>{{ dev.desc }}</td>
+        </tr>
       </tbody>
     </table>
   </div>
@@ -42,6 +46,7 @@
 <script setup lang="ts">
 import { defineProps, ref } from "vue";
 import { useToast } from "vue-toastification";
+import { vidPidString } from "@/utils";
 import { useDevicesStore } from "@/stores/devices";
 
 const props = defineProps<{
@@ -54,25 +59,21 @@ const toast = useToast();
 const devices = useDevicesStore();
 const error = ref(false);
 
-const padZeros = (v: string, n: number) =>
-  "0".repeat(Math.max(0, n - v.length)) + v;
-
-const toHex = (v: number) => v.toString(16);
-
 const scan = () => {
   const again = () => setTimeout(scan, props.period);
 
   if (!props.scan) return again();
 
-  devices.scan().then((r) => {
-    if (r != undefined) {
-      if (!error.value) toast.error("Device scan failed: " + r);
+  devices
+    .scan()
+    .then(() => (error.value = false))
+    .catch((e) => {
+      // Ignore scan error if installation has just been started (during scan)
+      if (devices.driverInstallOngoing) return;
+      if (!error.value) toast.error("Device scan failed: " + e);
       error.value = true;
-    } else {
-      error.value = false;
-    }
-    again();
-  });
+    })
+    .finally(() => again());
 };
 
 setTimeout(scan, 0);

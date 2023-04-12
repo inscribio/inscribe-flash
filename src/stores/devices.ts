@@ -12,6 +12,19 @@ export type DfuListEntry = {
   alt: number;
 };
 
+export type LibwdiDevice = {
+  vid: number;
+  pid: number;
+  is_composite: boolean;
+  mi?: number;
+  driver_version?: string;
+  desc: string;
+  device_id?: string;
+  hardware_id?: string;
+  compatible_id?: string;
+  upper_filter?: string;
+};
+
 const isDfuListEntry = (v: unknown): v is DfuListEntry => {
   if (typeof v != "object" || v == null) return false;
   const o = v as DfuListEntry;
@@ -35,6 +48,8 @@ export const useDevicesStore = defineStore("Devices", {
   state: () => {
     return {
       devices: [] as DfuListEntry[],
+      noDriver: [] as LibwdiDevice[],
+      driverInstallOngoing: false,
     };
   },
 
@@ -50,16 +65,16 @@ export const useDevicesStore = defineStore("Devices", {
   },
 
   actions: {
-    async scan(): Promise<string | undefined> {
-      const r = await invoke("list");
-
-      if (typeof r == "string") {
-        return r;
-      } else if (!isDfuListEntryList(r)) {
-        return "Unexpected data";
+    async scan() {
+      const devices = await invoke("list");
+      if (!isDfuListEntryList(devices)) {
+        throw Error("Unexpected data");
       }
+      this.devices = devices;
 
-      this.devices = r;
+      if (!this.driverInstallOngoing && (await invoke("has_winusb"))) {
+        this.noDriver = await invoke("winusb_candidates");
+      }
     },
 
     isKeyboard(dev: DfuListEntry): boolean {

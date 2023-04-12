@@ -16,6 +16,7 @@
     "inscribe-theme": "file:inscribe-theme",
     "pinia": "^2.0.14",
     "vue": "^3.2.13",
+    "vue-final-modal": "^4.0.4",
     "vue-toastification": "^2.0.0-rc.5"
   },
   "devDependencies": {
