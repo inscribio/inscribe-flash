@@ -25,9 +25,8 @@ tokio = "1.27"
 env_logger = "0.10"
 log = "0.4"
 
-# TODO: publish on repo
 [target.'cfg(windows)'.dependencies]
-winusb-installer = { path = "../../winusb-installer" }
+winusb-installer = { git = "https://github.com/inscribio/winusb-installer", tag = "v0.1.0" }
 
 [dev-dependencies]
 anyhow = "1.0"
