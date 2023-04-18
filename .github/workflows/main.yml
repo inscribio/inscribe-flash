@@ -1,0 +1,99 @@
+name: 'release'
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - v[0-9]+.[0-9]+.[0-9]+
+
+# Windows build dependencies
+# See: https://github.com/jedrzejboczar/libwdi-rs/blob/master/.github/workflows/msbuild.yml
+env:
+  WDK_URL: https://go.microsoft.com/fwlink/p/?LinkID=253170
+  WDK_DIR: ${{ github.workspace }}/wdk/Windows Kits/8.0
+  CARGO_TERM_VERBOSE: 'true'
+
+jobs:
+  build-tauri-app:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-20.04, windows-latest, macos-latest]
+
+    runs-on: ${{ matrix.platform }}
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: install dependencies (ubuntu)
+        if: matrix.platform == 'ubuntu-20.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.0-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: install dependencies (windows)
+        if: matrix.platform == 'windows-latest'
+        shell: cmd
+        run: |
+          curl -L ${{ env.WDK_URL }} -o wdk-redist.msi
+          msiexec /a wdk-redist.msi /qn TARGETDIR=%CD%\wdk
+
+      - name: Add MSBuild to PATH (windows)
+        if: matrix.platform == 'windows-latest'
+        uses: microsoft/setup-msbuild@v1
+
+        # For debugging rust build
+        # - name: debug cargo build problems
+        #   run: cargo build -vv
+        #   working-directory: ./src-tauri
+
+      - name: install frontend dependencies
+        run: npm ci
+
+      - name: build tauri app
+        run: npm run tauri:build
+
+      - name: compress artifacts (macos)
+        if: matrix.platform == 'macos-latest'
+        working-directory: ./src-tauri/target/release/bundle/macos
+        run: zip -9 -r inscribe-flash.app.zip *.app
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: app-bundle
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            src-tauri/target/release/bundle/appimage/*.AppImage
+            src-tauri/target/release/bundle/deb/*.deb
+            src-tauri/target/release/bundle/msi/*.msi
+            src-tauri/target/release/bundle/dmg/*.dmg
+            src-tauri/target/release/bundle/macos/*.app.zip
+
+  publish:
+    needs: build-tauri-app
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/download-artifact@v3
+        id: download  # used in steps.[id].outputs
+        with:
+          name: app-bundle
+          path: app-bundle
+
+      - name: create release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          fail_on_unmatched_files: true
+          files: ${{ steps.download.outputs.download-path }}/*/*
