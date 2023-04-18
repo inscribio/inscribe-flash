@@ -46,7 +46,7 @@
         :scan="true"
         :period="scanPeriod"
         :selected="selected.dev?.devnum ?? null"
-        :selectedTooltip="selected.tooltip ?? null"
+        @deviceSelected="onDeviceSelected"
       />
       <label class="label">
         <h1 class="label-text italic">{{ selected?.tooltip ?? "" }}</h1>
@@ -112,6 +112,7 @@ const progress = ref<ProgressInfo>(defaultProgress);
 const done = ref(false);
 const filename = ref("");
 const installer = ref<InstanceType<typeof DriversInstall> | null>(null);
+const selectedDevnum = ref(null as number | null);
 
 watch(
   () => fw.filename,
@@ -170,12 +171,27 @@ watch(
   () => (progress.value = getProgress())
 );
 
+const onDeviceSelected = (dev: DfuListEntry) => {
+  if (selectedDevnum.value == dev.devnum) selectedDevnum.value = null;
+  else selectedDevnum.value = dev.devnum;
+};
+
 const selected = computed(() => {
   const keyboards = devices.unique.filter(devices.isKeyboard);
   const bootloaders = devices.unique.filter(devices.isBootloader);
 
+  const userSelected = [...keyboards, ...bootloaders].find(
+    (dev) => dev.devnum == selectedDevnum.value
+  );
+
   if (keyboards.length == 0 && bootloaders.length == 0) {
     return { dev: null, tooltip: "No compatible devices" };
+  } else if (userSelected != undefined) {
+    // Use user's choice when possible
+    return {
+      dev: userSelected,
+      tooltip: `Will use selected devnum=${userSelected.devnum}`,
+    };
   } else if (bootloaders.length == 1) {
     return {
       dev: bootloaders[0],

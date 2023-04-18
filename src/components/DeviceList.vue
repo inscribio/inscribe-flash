@@ -15,6 +15,8 @@
           v-for="(dev, i) in devices.unique"
           :key="i"
           :class="dev.devnum == selected ? 'active' : ''"
+          class="hover hover-transition cursor-pointer"
+          @click="() => $emit('deviceSelected', dev)"
         >
           <th>{{ i + 1 }}</th>
           <td>{{ dev.is_dfu ? "Bootloader" : "Runtime" }}</td>
@@ -44,15 +46,19 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, ref } from "vue";
+import { defineProps, defineEmits, ref } from "vue";
 import { useToast } from "vue-toastification";
 import { vidPidString } from "@/utils";
-import { useDevicesStore } from "@/stores/devices";
+import { DfuListEntry, useDevicesStore } from "@/stores/devices";
 
 const props = defineProps<{
   scan: boolean;
   period: number;
   selected: number | null;
+}>();
+
+defineEmits<{
+  (_e: "deviceSelected", _dev: DfuListEntry): void;
 }>();
 
 const toast = useToast();
@@ -78,3 +84,10 @@ const scan = () => {
 
 setTimeout(scan, 0);
 </script>
+
+<style scoped>
+.hover-transition th,
+.hover-transition td {
+  @apply transition duration-100;
+}
+</style>
