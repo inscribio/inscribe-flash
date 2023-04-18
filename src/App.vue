@@ -2,37 +2,41 @@
   <div
     class="antialiased mx-auto min-h-screen max-w-lg flex flex-col justify-between items-center pt-12 pb-14 gap-4"
   >
-    <div class="w-full max-w-md form-control">
-      <FirmwareSelect class="w-full h-36" :disabled="ongoing" />
+    <div class="w-full flex flex-col justify-center items-center gap-8">
+      <div class="w-full max-w-md form-control">
+        <FirmwareSelect class="w-full h-36" :disabled="ongoing" />
 
-      <label class="label px-4">
-        <span class="label-text">
-          <span class=""> File: </span>
-          {{ filename != "" ? filename : "-" }}
-        </span>
-        <span class="label-text-alt">
-          {{ fw.size == null ? "" : (fw.size / 1024).toFixed(1) + " kB" }}
-        </span>
-      </label>
+        <label class="label px-4">
+          <span class="label-text">
+            <span class=""> File: </span>
+            {{ filename != "" ? filename : "-" }}
+          </span>
+          <span class="label-text-alt">
+            {{ fw.size == null ? "" : (fw.size / 1024).toFixed(1) + " kB" }}
+          </span>
+        </label>
+      </div>
+
+      <div class="btn-group btn-group-vertical">
+        <button
+          class="btn btn-accent btn-wide gap-2"
+          :disabled="!fw.firmwareOk"
+          @click="onFlash"
+        >
+          <Icon icon="ic:round-flash-on" class="text-lg" />
+          Flash
+        </button>
+
+        <button
+          v-if="driver_install_needed"
+          class="btn btn-secondary gap-2"
+          @click="onInstallDrivers"
+        >
+          <Icon icon="ic:baseline-install-desktop" class="text-lg" />
+          Install drivers
+        </button>
+      </div>
     </div>
-
-    <button
-      class="btn btn-accent btn-wide gap-2"
-      :disabled="!fw.firmwareOk"
-      @click="onFlash"
-    >
-      <Icon icon="ic:round-flash-on" class="text-lg" />
-      Flash
-    </button>
-
-    <button
-      v-if="driver_install_needed"
-      class="btn btn-secondary gap-2"
-      @click="onInstallDrivers"
-    >
-      <Icon icon="ic:baseline-install-desktop" class="text-lg" />
-      Install drivers
-    </button>
 
     <div class="form-control">
       <label class="label">
