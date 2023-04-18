@@ -74,7 +74,7 @@
     "windows": [
       {
         "fullscreen": false,
-        "height": 600,
+        "height": 640,
         "resizable": true,
         "title": "inscrib.io | inscribe-flash",
         "width": 800
