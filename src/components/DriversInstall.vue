@@ -54,8 +54,11 @@
       </div>
 
       <p class="prose" v-if="state == 'selecting' || state == 'preparing'">
-        <b>NOTE:</b> This operation will require administrator permissions.
-        System popup window may appear and has to be accepted.
+        <b>NOTE:</b>
+        Uses
+        <a href="https://github.com/pbatard/libwdi" target="_blank">libwdi</a>.
+        This operation will require administrator permissions. System popup
+        window may appear and has to be accepted.
       </p>
     </div>
 
@@ -87,7 +90,7 @@ import type { UnlistenFn } from "@tauri-apps/api/event";
 import { computed, defineExpose, onMounted, onBeforeUnmount, ref } from "vue";
 import { VueFinalModal } from "vue-final-modal";
 import { assertUnreachable, sleep, vidPidString } from "@/utils";
-import { useDevicesStore, DfuListEntry, LibwdiDevice } from "@/stores/devices";
+import { useDevicesStore, LibwdiDevice } from "@/stores/devices";
 
 const devices = useDevicesStore();
 
