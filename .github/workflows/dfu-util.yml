@@ -1,0 +1,53 @@
+name: 'dfu-util'
+on: workflow_dispatch
+
+env:
+  LIBUSB_TAG: v1.0.26
+  INSTALL_DIR: ${{ github.workspace }}/out
+  TARGET: aarch64-apple-darwin
+  DFU_UTIL_VERSION: '0.11'
+
+jobs:
+  build-dfu-util:
+    runs-on: macos-latest
+
+    steps:
+      - name: install dependencies
+        run: brew install autoconf automake pkg-config libtool md5sha1sum
+
+      - name: download libusb sources
+        run: git clone --depth 1 --branch $LIBUSB_TAG https://github.com/libusb/libusb.git
+
+      - name: download dfu-util sources
+        run: |
+          curl -O https://dfu-util.sourceforge.net/releases/dfu-util-$DFU_UTIL_VERSION.tar.gz
+          curl -O https://dfu-util.sourceforge.net/releases/dfu-util-$DFU_UTIL_VERSION.tar.gz.md5
+          md5sum -c dfu-util-*.md5
+          tar xzf dfu-util-*.tar.gz
+          rm dfu-util-*.tar.gz*
+          mv dfu-util-* dfu-util
+
+      - name: build libusb
+        working-directory: ./libusb
+        run: |
+          ./autogen.sh
+          ./configure --host=$TARGET CC="gcc -target $TARGET" --prefix=$INSTALL_DIR
+          make -j
+          make install
+
+      - name: build dfu-util
+        working-directory: ./dfu-util
+        env:
+          PKG_CONFIG_PATH: ${{ env.INSTALL_DIR }}/lib/pkgconfig
+        run: |
+          ./autogen.sh
+          ./configure --host=$TARGET CC="gcc -target $TARGET" --prefix=$INSTALL_DIR
+          make -j
+          make install
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: dfu-util
+          retention-days: 7
+          if-no-files-found: error
+          path: ${{ env.INSTALL_DIR }}
