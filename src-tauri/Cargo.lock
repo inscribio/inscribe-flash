@@ -1440,8 +1440,8 @@ dependencies = [
 
 [[package]]
 name = "libwdi"
-version = "0.1.0"
-source = "git+https://github.com/jedrzejboczar/libwdi-rs?tag=v0.1.0#396af3857837f0d1a758e9ce8f207f0837bfc6e1"
+version = "0.1.2"
+source = "git+https://github.com/jedrzejboczar/libwdi-rs?tag=v0.1.2#3620e82ba60c4bffcf5306a5feb49149bf2efd32"
 dependencies = [
  "libwdi-sys",
  "thiserror",
@@ -1449,8 +1449,8 @@ dependencies = [
 
 [[package]]
 name = "libwdi-sys"
-version = "0.1.0"
-source = "git+https://github.com/jedrzejboczar/libwdi-rs?tag=v0.1.0#396af3857837f0d1a758e9ce8f207f0837bfc6e1"
+version = "0.1.2"
+source = "git+https://github.com/jedrzejboczar/libwdi-rs?tag=v0.1.2#3620e82ba60c4bffcf5306a5feb49149bf2efd32"
 dependencies = [
  "bindgen",
 ]
@@ -3796,8 +3796,8 @@ dependencies = [
 
 [[package]]
 name = "winusb-installer"
-version = "0.1.0"
-source = "git+https://github.com/inscribio/winusb-installer?tag=v0.1.0#a657f15fbea105e93edbbefcb1466e4a7eb6e2b8"
+version = "0.1.2"
+source = "git+https://github.com/inscribio/winusb-installer?tag=v0.1.2#d17e21f97c26329c3716f16169765289a3e40f05"
 dependencies = [
  "env_logger",
  "futures",
