@@ -48,6 +48,6 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: dfu-util
-          retention-days: 7
+          retention-days: 3
           if-no-files-found: error
           path: ${{ env.INSTALL_DIR }}

@@ -17,7 +17,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ubuntu-20.04, windows-latest, macos-latest]
+        include:
+          - platform: ubuntu-20.04
+            rust_target: x86_64-unknown-linux-gnu
+          - platform: windows-latest
+            rust_target: x86_64-pc-windows-msvc
+          - platform: macos-latest
+            rust_target: x86_64-apple-darwin
+          - platform: macos-latest
+            rust_target: aarch64-apple-darwin
 
     runs-on: ${{ matrix.platform }}
 
@@ -31,8 +39,16 @@ jobs:
         with:
           node-version: 18
 
-      - name: install Rust stable
-        uses: dtolnay/rust-toolchain@stable
+      - name: install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          default: true
+          override: true
+          profile: minimal
+          toolchain: stable
+          target: ${{ matrix.rust_target }}
+
+      - uses: Swatinem/rust-cache@v2
 
       - name: install dependencies (ubuntu)
         if: matrix.platform == 'ubuntu-20.04'
@@ -59,25 +75,27 @@ jobs:
       - name: install frontend dependencies
         run: npm ci
 
+      # Note that when building with --target outputs are stored in src-tauri/target/$target/release
       - name: build tauri app
-        run: npm run tauri:build
+        run: npm run tauri:build -- --target ${{ matrix.rust_target }}
 
       - name: compress artifacts (macos)
         if: matrix.platform == 'macos-latest'
-        working-directory: ./src-tauri/target/release/bundle/macos
+        working-directory: ./src-tauri/target/${{ matrix.rust_target }}/release/bundle/macos
         run: zip -9 -r inscribe-flash.app.zip *.app
 
       - uses: actions/upload-artifact@v3
         with:
           name: app-bundle
-          retention-days: 7
+          retention-days: 3
           if-no-files-found: error
+          # This action cuts common part of paths, so src-tauri/target
           path: |
-            src-tauri/target/release/bundle/appimage/*.AppImage
-            src-tauri/target/release/bundle/deb/*.deb
-            src-tauri/target/release/bundle/msi/*.msi
-            src-tauri/target/release/bundle/dmg/*.dmg
-            src-tauri/target/release/bundle/macos/*.app.zip
+            src-tauri/target/*/release/bundle/appimage/*.AppImage
+            src-tauri/target/*/release/bundle/deb/*.deb
+            src-tauri/target/*/release/bundle/msi/*.msi
+            src-tauri/target/*/release/bundle/dmg/*.dmg
+            src-tauri/target/*/release/bundle/macos/*.app.zip
 
   publish:
     needs: build-tauri-app
@@ -96,4 +114,4 @@ jobs:
         with:
           draft: true
           fail_on_unmatched_files: true
-          files: ${{ steps.download.outputs.download-path }}/*/*
+          files: ${{ steps.download.outputs.download-path }}/**/*
