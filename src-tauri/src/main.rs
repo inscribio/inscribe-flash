@@ -3,8 +3,9 @@
     windows_subsystem = "windows"
 )]
 
-use std::io::{self, Write};
+use std::{io::{self, Write}, path::Path, collections::HashMap};
 
+use tauri::{Manager, PathResolver};
 use tempfile::NamedTempFile;
 
 use app::dfu_util;
@@ -21,14 +22,34 @@ pub fn bytes_as_file(bytes: &[u8]) -> io::Result<NamedTempFile> {
     Ok(file)
 }
 
-#[tauri::command]
-fn list() -> Result<Vec<dfu_util::DfuListEntry>, String> {
-    dfu_util::list().map_err(|e| e.to_string())
+fn dfu_util_env(path_resolver: PathResolver) -> HashMap<String, String> {
+    let mut env = HashMap::new();
+    if let Some(resource_dir) = path_resolver.resource_dir() {
+        let libs_dir = Path::join(&resource_dir, "bin/libs");
+        if cfg!(target_os = "macos") {
+            let var = "DYLD_LIBRARY_PATH";
+            let dir = if cfg!(target_arch = "aarch64") {
+                "aarch64-apple-darwin"
+            } else {
+                "x86_64-apple-darwin"
+            };
+            env.insert(var.to_string(), Path::join(&libs_dir, dir).to_string_lossy().to_string());
+       }
+       // env.insert("LD_LIBRARY_PATH", );
+    }
+    env
 }
 
 #[tauri::command]
-fn detach(dev_num: usize) -> Result<(), String> {
-    dfu_util::detach(dev_num)
+fn list(app_handle: tauri::AppHandle) -> Result<Vec<dfu_util::DfuListEntry>, String> {
+    let env = dfu_util_env(app_handle.path_resolver());
+    dfu_util::list(env).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn detach(app_handle: tauri::AppHandle, dev_num: usize) -> Result<(), String> {
+    let env = dfu_util_env(app_handle.path_resolver());
+    dfu_util::detach(env, dev_num)
         .map_err(|e| e.to_string())
 }
 
@@ -46,7 +67,8 @@ async fn flash(window: tauri::Window, firmware: Vec<u8>, dev_num: usize) -> Resu
         reset: false,
     };
 
-    let _stderr = dfu_util::download_with_progress(config, |progress| {
+    let env = dfu_util_env(window.app_handle().path_resolver());
+    let _stderr = dfu_util::download_with_progress(env, config, |progress| {
         window.emit("flash-progress", progress.clone()).ok();
     }).await.map_err(|e| e.to_string())?;
 

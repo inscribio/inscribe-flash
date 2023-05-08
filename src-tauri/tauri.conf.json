@@ -45,7 +45,8 @@
         "icons/32x32.png"
       ],
       "resources": [
-        "bin/"
+        "bin/dfu-util-*",
+        "bin/libs/"
       ],
 
       "targets": "all",

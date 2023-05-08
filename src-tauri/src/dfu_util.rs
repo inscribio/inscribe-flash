@@ -1,4 +1,4 @@
-use std::path::PathBuf;
+use std::{path::PathBuf, collections::HashMap};
 use std::io;
 
 use regex::{Regex, RegexBuilder};
@@ -65,8 +65,9 @@ pub struct DownloadConfig {
     pub reset: bool,
 }
 
-pub fn list() -> Result<Vec<DfuListEntry>> {
+pub fn list(env: HashMap<String, String>) -> Result<Vec<DfuListEntry>> {
     let output = process::Command::new_sidecar(DFU_UTIL_SIDECAR)?
+        .envs(env)
         .args(["--list"])
         .output()?;
 
@@ -87,8 +88,9 @@ pub fn list() -> Result<Vec<DfuListEntry>> {
     Ok(entries.collect())
 }
 
-pub fn detach(dev_num: usize) -> Result<()> {
+pub fn detach(env: HashMap<String, String>, dev_num: usize) -> Result<()> {
     let output = process::Command::new_sidecar(DFU_UTIL_SIDECAR)?
+        .envs(env)
         .args(["--devnum", &dev_num.to_string()])
         .args(["--detach"])
         .output()?;
@@ -106,14 +108,14 @@ pub fn detach(dev_num: usize) -> Result<()> {
     }
 }
 
-fn download<'a>(config: &'a DownloadConfig) -> Result<process::Command> {
+fn download<'a>(env: HashMap<String, String>, config: &'a DownloadConfig) -> Result<process::Command> {
     let firmware = config
         .firmware
         .to_str()
         .ok_or_else(|| DfuUtilError::InvalidUtf8(config.firmware.to_string_lossy().to_string()))?;
     let dfuse_address = &format!("0x{:08x}:leave", config.address);
 
-    let mut cmd = process::Command::new_sidecar(DFU_UTIL_SIDECAR)?;
+    let mut cmd = process::Command::new_sidecar(DFU_UTIL_SIDECAR)?.envs(env);
     cmd = cmd.args(["--devnum", &config.dev_num.to_string()])
         .args(["--alt", &config.alt.to_string()])
         .args(["--dfuse-address", dfuse_address])
@@ -128,13 +130,14 @@ fn download<'a>(config: &'a DownloadConfig) -> Result<process::Command> {
 }
 
 pub async fn download_with_progress<F>(
+    env: HashMap<String, String>,
     config: DownloadConfig,
     mut on_progress: F,
 ) -> Result<String>
 where
     F: FnMut(&DfuProgress),
 {
-    let cmd = download(&config)?;
+    let cmd = download(env, &config)?;
 
     let (mut rx, _child) = cmd.spawn()?;
     let mut stderr = String::new();
