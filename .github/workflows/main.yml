@@ -111,6 +111,6 @@ jobs:
       - name: create release
         uses: softprops/action-gh-release@v1
         with:
-          draft: true
           fail_on_unmatched_files: true
           files: ${{ steps.download.outputs.download-path }}/**/*
+          body: See [README](https://github.com/inscribio/inscribe-flash) for installation instructions.
