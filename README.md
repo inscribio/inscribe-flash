@@ -2,51 +2,33 @@
 
 Application for uploading keyboard firmware over USB.
 
-## Installing
+## Installation
 
-Download the application from releases.
+Download the application from [releases](https://github.com/inscribio/inscribe-flash/releases/latest)
+selecting correct version for your device:
+
+* Windows: `*_x64_en-US.msi`
+* MacOs x86_64: `*_x64.app.zip` or `*_x64.dmg`
+* MacOs ARM64: `*_aarch64.app.zip` or `*_aarch64.dmg`
+* Linux: `*_amd64.AppImage` or `*_amd64.deb`
 
 ### Windows
 
-Install the application using the installer (`.msi` file).
-
-> Currently the initial setup on Windows is more complicated than on other platforms
-> due to limitations of USB drivers on Windows. We are trying to simplify the setup,
-> but for now please follow the instructions below.
-
-On Windows it is necessary to install additional drivers in order to flash firmware over USB.
-To do this install [Zadig](https://zadig.akeo.ie/) drivers installer.
-Because the keyboard has 2 different modes ("runtime" and "bootloader") driver installation
-will have to be done twice.
-
-When you are ready to flash new firmware file:
-
-* Run Zadig, connect your keyboard and click on `Install WCID Driver`.
-* Start inscribe-flash, select firmware file and click `Flash`.
-* The keyboard will be detached into "bootloader" mode.
-* Now run Zadig once again and install drivers with `Install WCID Driver`.
-* Close inscribe-flash.
-
-From now on you should be able to flash firmware with inscribe-flash using the regular
-procedure. In case this doesn't work on the first attempt, try restarting your system.
-If restart doesn't help please submit an issue.
-
-For troubleshooting you can also see [How to use libusb on Windows](https://github.com/libusb/libusb/wiki/Windows#how-to-use-libusb-on-windows).
+On Windows it might be necessary to install additional USB drivers.
+When you run the application it will detect if drivers are missing and you will
+be prompted to automatically install them.
+Under the hood it will use [winusb-installer based on libwdi](https://github.com/inscribio/winusb-installer).
 
 ### Mac
 
-Install the application using the Application Bundle (`.app`) or Disk Image (`.dmg`).
-
-On macOS it is currently necessary to install `libusb`. The simpliest way is to install
-[Homebrew](https://brew.sh/) and then run `brew install libusb` from macOS Terminal.
-Then you can use inscribe-flash normally.
+There should be no need for any additional configuration as all the required
+dependencies are included in the application.
 
 ### Linux
 
-Install from the provided `.deb` package or use the provided AppImage. No additional
-dependencies are needed.
+You will need libusb installed on your system (it is installed by default on most distributions).
 
-To allow access without root permissions (without "sudo") add make sure to save the following
+To allow access without root permissions (without "sudo") make sure to save the following
 udev rule file at `/etc/udev/rules.d/40-generic-keyboard.rules`:
 ```
 # Allow access to 16c0:27db (generic keyboard) for users in group plugdev
@@ -57,11 +39,13 @@ see `plugdev` then add your user with `sudo usermod -a -G plugdev <your-username
 
 ## Usage
 
-Start inscribe-flash then select the firmware file that you want to flash (or drag it
+Start `inscribe-flash` then select the firmware file that you want to flash (or drag it
 into the area). Connect your keyboard, it should show up under "Detected devices".
+Optionally select the device to be used by clicking on it (or use the one selected by default).
 Click the "Flash" button. This will detach the keyboard into "Bootloader" mode (if not
 already detached) and perform firmware upgrade. When finished, unplug your keyboard and
-plug it again. It will now be using the new firmware.
+plug it again (might not be needed depending on the system).
+The keyboard will now be using the new firmware.
 
 ## Development
 
@@ -84,6 +68,3 @@ To build executable for release:
 ```sh
 npm run tauri:build
 ```
-
-This will build only the executables for current system. After building on all systems
-generate relases with `utils/release.sh`.
