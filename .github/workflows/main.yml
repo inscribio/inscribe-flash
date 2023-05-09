@@ -81,8 +81,7 @@ jobs:
 
       - name: compress artifacts (macos)
         if: matrix.platform == 'macos-latest'
-        working-directory: ./src-tauri/target/${{ matrix.rust_target }}/release/bundle/macos
-        run: zip -9 -r inscribe-flash.app.zip *.app
+        run: utils/prepare-macos-app.sh ${{ matrix.rust_target }}
 
       - uses: actions/upload-artifact@v3
         with:
