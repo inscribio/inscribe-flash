@@ -68,3 +68,41 @@ To build executable for release:
 ```sh
 npm run tauri:build
 ```
+
+## Troubleshooting
+
+If you cannot detach the device (to bootloader) make sure to press the AllowBootloader button -
+by default keyboard will not allow detaching before the button is pressed. You can find the location
+of this button for your firmware in the online configurator.
+
+If you don't know which button has the AllowBootloader function, you will have to manually detach the
+keyboard to bootloader. To do so:
+
+* Connect the keyboard to PC via USB cable. Then, on the half connected via USB:
+* Find a small hole in the upper part of keyboard case, located slightly above the thumb cluster.
+* Use a toothpick or similar object to push a button and hold it for 3 seconds.
+* The keyboard should detach to bootloader and you will see this in inscribe-flash
+
+### Windows
+
+USB drivers on Windows are more problematic than on Mac/Linux. In order to detach/flash the keyboard
+WinUSB driver must be loaded in the system. The keyboard in its "main mode" uses Microsoft OS 2.0 descriptors
+to instruct the system to automatically load WinUSB driver for the device. This way detaching to bootloader
+should work out of the box. The bootloader requires installation of WinUSB driver, which is automatically done
+by inscribe-flash application.
+
+If detaching or flashing does not work, try to uninstall all drivers for the keyboard/bootloader by following
+these steps:
+
+* Delete all registry entries for this device
+    * This is needed because Windows reads special MS OS 2.0 descriptors only when the device is connected for the first time
+    * Open Registry Editor (type it in application menu or use Run -> "regedit")
+    * Go to `HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\usbflags`
+    * Find all entries starting with `16C027DB` (e.g. `16C027DB0001`), which corresponds to keyboard's VID:PID which is 16C0:27DB
+    * Click on each entry and select "Delete"
+* Uninstall USB drivers for the keyboard and bootloader
+    * Open Device Manager (right click on start menu)
+    * Find device "ghanima keyboard" ("main mode" of operation of the keyboard)
+    * Right-click -> Uninstall device -> Check the "Delete driver..." checkbox -> Confirm
+    * Now detach the keyboard to bootloader manually as described at the beginning of Troubleshooting section
+    * Find device called "STM32 BOOTLOADER" and uninstall drivers the same as before
