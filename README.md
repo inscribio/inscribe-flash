@@ -2,6 +2,8 @@
 
 Application for uploading keyboard firmware over USB.
 
+![inscribe-flash](https://github.com/inscribio/inscribe-flash/assets/16623787/04da3aaf-6645-4ac0-bd0d-1bcbb375d16d)
+
 ## Installation
 
 Download the application from [releases](https://github.com/inscribio/inscribe-flash/releases/latest)
