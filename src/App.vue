@@ -63,6 +63,8 @@
       :maxValue="progress.max"
     />
 
+    <AboutApp class="absolute top-3 right-3" />
+
     <ModalsContainer />
   </div>
 </template>
@@ -80,6 +82,7 @@ import FirmwareSelect from "@/components/FirmwareSelect.vue";
 import DeviceList from "@/components/DeviceList.vue";
 import ProgressBar from "@/components/ProgressBar.vue";
 import DriversInstall from "@/components/DriversInstall.vue";
+import AboutApp from "@/components/AboutApp.vue";
 
 const toast = useToast();
 const fw = useFirmwareStore();
