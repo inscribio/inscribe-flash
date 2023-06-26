@@ -85,6 +85,11 @@ keyboard to bootloader. To do so:
 * Use a toothpick or similar object to push a button and hold it for 3 seconds.
 * The keyboard should detach to bootloader and you will see this in inscribe-flash
 
+### Antivirus software
+
+In some cases you might need to temporarily disable your antivirus software or add inscribe-flash
+to the exceptions list.
+
 ### Windows
 
 USB drivers on Windows are more problematic than on Mac/Linux. In order to detach/flash the keyboard
