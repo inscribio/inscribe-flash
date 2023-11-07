@@ -41,13 +41,21 @@ see `plugdev` then add your user with `sudo usermod -a -G plugdev <your-username
 
 ## Usage
 
-Start `inscribe-flash` then select the firmware file that you want to flash (or drag it
-into the area). Connect your keyboard, it should show up under "Detected devices".
-Optionally select the device to be used by clicking on it (or use the one selected by default).
-Click the "Flash" button. This will detach the keyboard into "Bootloader" mode (if not
-already detached) and perform firmware upgrade. When finished, unplug your keyboard and
-plug it again (might not be needed depending on the system).
-The keyboard will now be using the new firmware.
+1. Start the `inscribe-flash` application. With no keyboard attached you won't see any devices available.
+2. Make sure your keyboard is connected. It should show up at the bottom in "Runtime" mode.
+3. Select the firmware file using the button at the top or (drag&drop the file into the area).
+4. Make sure to use the "Allow Bootloader" button before flashing or you may see an error message.
+5. Click the `FLASH` button. This should detach your keybord into "Bootloader" mode (if no already detached)
+and perform firmware upgrade. Do not use your keyboard during update to avoid problems.
+6. When flashing has finished, you will see "Done" status at the bottom. The keyboard will now be using the new firmware.
+
+> Depending on the operating system you may need to unplug your keyboard and plug it again if it doesn't work immediately.
+
+Here is a video demonstrating the process. 
+In the example the "Allow Bootloader" button has not been pressed when first trying to flash the firmware.
+The second attempt is performed after pressing the button.
+
+https://github.com/inscribio/inscribe-flash/assets/16623787/696a19e2-0539-43d4-b2b4-3b5c37fea68e
 
 ## Development
 
