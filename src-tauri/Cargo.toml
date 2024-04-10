@@ -1,6 +1,6 @@
 [package]
 name = "app"
-version = "1.2.2"
+version = "1.2.3"
 description = "Uploade keyboard firmware over USB"
 authors = ["Jędrzej Boczar"]
 license = ""
