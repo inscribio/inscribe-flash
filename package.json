@@ -7,8 +7,7 @@
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
     "tauri:build": "vue-cli-service tauri:build",
-    "tauri:serve": "vue-cli-service tauri:serve",
-    "dev": "pane=$(tmux split-window -P -F '#{pane_id}' -h vue-cli-service serve); trap \"tmux kill-pane -t $pane\" EXIT; tauri dev --config '{ \"build\": { \"devPath\": \"http://localhost:3000\" }}'"
+    "tauri:serve": "vue-cli-service tauri:serve"
   },
   "dependencies": {
     "@tauri-apps/api": "^1.0.0-rc.6",
