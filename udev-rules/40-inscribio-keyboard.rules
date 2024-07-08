@@ -1,0 +1,4 @@
+# Allow access to 16c0:27db (generic keyboard) for users in group plugdev
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="27db", GROUP="plugdev", MODE="0666"
+# Allow access to 0483:df11 STM32 Bootloader
+SUBSYSTEMS=="usb", ATTRS{idVendor}=="0483", ATTRS{idProduct}=="df11", GROUP="plugdev", MODE="0666"

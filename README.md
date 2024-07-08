@@ -30,12 +30,9 @@ dependencies are included in the application.
 
 You will need libusb installed on your system (it is installed by default on most distributions).
 
-To allow access without root permissions (without "sudo") make sure to save the following
-udev rule file at `/etc/udev/rules.d/40-generic-keyboard.rules`:
-```
-# Allow access to 16c0:27db (generic keyboard) for users in group plugdev
-SUBSYSTEMS=="usb", ATTRS{idVendor}=="16c0", ATTRS{idProduct}=="27db", GROUP="plugdev", MODE="0666"
-```
+To allow access without root permissions (without "sudo") make sure to copy the udev rules file
+[40-inscribio-keyboard.rules](/udev-rules/40-inscribio-keyboard.rules) to
+`/etc/udev/rules.d/40-inscribio-keyboard.rules`
 and ensure that user is in group `plugdev`. To check it use the command `groups`, if you don't
 see `plugdev` then add your user with `sudo usermod -a -G plugdev <your-username>`.
 
@@ -51,7 +48,7 @@ and perform firmware upgrade. Do not use your keyboard during update to avoid pr
 
 > Depending on the operating system you may need to unplug your keyboard and plug it again if it doesn't work immediately.
 
-Here is a video demonstrating the process. 
+Here is a video demonstrating the process.
 In the example the "Allow Bootloader" button has not been pressed when first trying to flash the firmware.
 The second attempt is performed after pressing the button.
 
