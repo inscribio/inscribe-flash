@@ -30,11 +30,10 @@ dependencies are included in the application.
 
 You will need libusb installed on your system (it is installed by default on most distributions).
 
-To allow access without root permissions (without "sudo") make sure to copy the udev rules file
-[40-inscribio-keyboard.rules](/udev-rules/40-inscribio-keyboard.rules) to
-`/etc/udev/rules.d/40-inscribio-keyboard.rules`
-and ensure that user is in group `plugdev`. To check it use the command `groups`, if you don't
-see `plugdev` then add your user with `sudo usermod -a -G plugdev <your-username>`.
+To allow access without root permissions (without "sudo"):
+* Copy the udev rules file [40-inscribio-keyboard.rules](/udev-rules/40-inscribio-keyboard.rules) to `/etc/udev/rules.d/40-inscribio-keyboard.rules`.
+* Ensure that user is in group `plugdev`. To check it use the command `groups` - if you don't see `plugdev` in the output then add your user with `sudo usermod -a -G plugdev <your-username>`.
+* Reload udev rules - reboot your system **or** run `sudo udevadm control --reload-rules && sudo udevadm trigger`.
 
 ## Usage
 
